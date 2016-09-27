@@ -13,7 +13,8 @@ public class FloorSpawner : MonoBehaviour {
 			if(Random.Range(0, 2) == 0) {
 				h = 0.5f;
 			}
-			Instantiate(groundTile, new Vector3((i - 5) * 0.5f, -0.5f+h, 0), Quaternion.identity);
+			Instantiate(groundTile, new Vector3((i - 5) * 0.5f, -0.5f, 0), Quaternion.identity);
+			Instantiate(groundTile, new Vector3((i + 5) * 0.5f, -0.5f+h, 0), Quaternion.identity);
 		}
 	}
 }
