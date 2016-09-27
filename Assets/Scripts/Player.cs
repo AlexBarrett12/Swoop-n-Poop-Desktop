@@ -54,7 +54,7 @@ public class Player : MonoBehaviour {
 		}
 
 		if(inAir) {  //handles falling and ground collision detection
-			if((hit1.collider != null && hit1.collider.tag == "Ground") || (hit2.collider != null && hit2.collider.tag == "Ground")) {
+			if(downSpeed <= 0 && ((hit1.collider != null && hit1.collider.tag == "Ground") || (hit2.collider != null && hit2.collider.tag == "Ground"))) {
 				inAir = false;
 				jump = false;
 				downSpeed = 0;
