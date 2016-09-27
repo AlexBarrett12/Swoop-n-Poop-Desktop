@@ -17,6 +17,8 @@ public class Player : MonoBehaviour {
 	private Transform mainCamTransform;
 	private bool yCorrected;
 
+	public int hp;
+	public float invulnTime;
 	public LayerMask groundLayerMask;
 
 	void Start () 
