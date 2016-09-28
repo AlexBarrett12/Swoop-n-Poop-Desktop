@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour {
 
@@ -16,8 +17,10 @@ public class Player : MonoBehaviour {
 	private int collision;
 	private Transform mainCamTransform;
 	private bool yCorrected;
+	private float knockBackTime;
+	private float knockBackX;
 
-	public int hp;
+	public int hp = 10;
 	public float invulnTime;
 	public LayerMask groundLayerMask;
 
@@ -32,19 +35,17 @@ public class Player : MonoBehaviour {
 		collision = 1;
 		forwardDir = 0;
 		yCorrected = false;
-		if(Input.GetAxis("Horizontal") > 0){
+		if((Input.GetAxis("Horizontal") > 0 && knockBackTime <= Time.time) || knockBackX > 0){
 			forwardDir = 1;
 		}
-		if(Input.GetAxis("Horizontal") < 0) {
+		if((Input.GetAxis("Horizontal") < 0 && knockBackTime <= Time.time) || knockBackX < 0) {
 			forwardDir = -1;
 		}
 		hit1 = Physics2D.Raycast(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f), Vector2.down, GetComponent<BoxCollider2D>().size.y * 0.01f, groundLayerMask);
 		hit2 = Physics2D.Raycast(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f), Vector2.down, GetComponent<BoxCollider2D>().size.y * 0.01f, groundLayerMask);
 		hitForward = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y*0.4f), Vector3.right*forwardDir, GetComponent<BoxCollider2D>().size.x * 0.55f, groundLayerMask);
 
-		Debug.DrawLine(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f), new Vector3(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f, 0) + Vector3.down * GetComponent<BoxCollider2D>().size.y * 0.01f, Color.yellow, 20);
-		Debug.DrawLine(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f), new Vector3(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f, 0) + Vector3.down * GetComponent<BoxCollider2D>().size.y * 0.01f, Color.yellow, 20);
-		Debug.DrawLine(new Vector2(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.4f),new Vector3(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.45f, 0) + Vector3.right * forwardDir * GetComponent<BoxCollider2D>().size.x * 0.55f+new Vector3(0.1f,0.1f,0.1f), Color.blue, 20);
+		//Debug.DrawLine(new Vector2(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.4f), new Vector3(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.4f, 0) + Vector3.right * forwardDir * GetComponent<BoxCollider2D>().size.x * 0.55f, Color.yellow);
 
 		if(!inAir) { //check if there still is ground beneath the player's feet
 			if(hit1.collider == null && hit2.collider == null) {
@@ -74,15 +75,22 @@ public class Player : MonoBehaviour {
 			downSpeed = 0.2f;
 		}
 
+		if(knockBackTime > Time.time) {
+			collision = 0;
+		}
 		if(hitForward.collider != null && hitForward.collider.tag == "Ground" && !yCorrected) {  //handles horizontal collisions
 			transform.position = new Vector3(hitForward.collider.transform.position.x - (hitForward.collider.GetComponent<BoxCollider2D>().size.x*0.5f+GetComponent<BoxCollider2D>().size.x*0.5f)*forwardDir,transform.position.y,transform.position.z);
 			collision = 0;
 		}
+		GameObject.FindGameObjectWithTag("HP").GetComponent<Text>().text = "HP: " + hp;
 	}
 
 	void FixedUpdate()
 	{
-		rb2D.MovePosition(new Vector3(transform.position.x + Input.GetAxis("Horizontal")*moveSpeed*collision, transform.position.y + downSpeed, 0));
+		if(knockBackTime <= Time.time && knockBackX != 0) {
+			knockBackX = 0;
+		}
+		rb2D.MovePosition(new Vector3(transform.position.x + Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX, transform.position.y + downSpeed, 0));
 		mainCamTransform.GetComponent<Rigidbody2D>().MovePosition(new Vector2(mainCamTransform.position.x + (transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x), mainCamTransform.position.y + (transform.position.y - mainCamTransform.position.y)*(transform.position.y - mainCamTransform.position.y)*(transform.position.y - mainCamTransform.position.y)));
 		if(inAir) {
 			if(!jump) {
@@ -95,6 +103,15 @@ public class Player : MonoBehaviour {
 					downSpeed = -maxDownSpeed;
 				}
 			}
+		}
+	}
+	public void hurt(int dmg, float deltaInvuln, Vector2 dir)
+	{
+		if(invulnTime <= Time.time) {
+			hp -= dmg;
+			invulnTime += deltaInvuln;
+			knockBackX = dir.x*0.15f;
+			knockBackTime = Time.time + 0.2f;
 		}
 	}
 }
