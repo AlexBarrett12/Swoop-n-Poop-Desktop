@@ -118,8 +118,9 @@ public class BirdAI : MonoBehaviour {
 		}
 
 		if(!swoop){
-			if(transform.position.y + 0.02f > targetHeight && transform.position.y - 0.02f < targetHeight){
+			if(transform.position.y + 0.04f > targetHeight && transform.position.y - 0.04f < targetHeight){
 				transform.position = new Vector3(transform.position.x, targetHeight, 0);
+				initialYSwoop = 0;
 			}
 			if(transform.position.y < targetHeight){
 				DirY = 0.04f;

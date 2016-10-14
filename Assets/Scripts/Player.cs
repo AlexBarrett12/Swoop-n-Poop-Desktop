@@ -24,6 +24,9 @@ public class Player : MonoBehaviour {
 	private int raycastVerticalFlip = 1;
 	private float angleX;
 	private float angleY;
+	private float initialJumpTime;
+	private float finalJumpTime;
+	private float slopeHitExtender = 1;
 
 	public int hp = 10;
 	public float invulnTime;
@@ -42,6 +45,7 @@ public class Player : MonoBehaviour {
 		collision = 1;
 		forwardDir = 0;
 		yCorrected = false;
+		slopeHitExtender = 1;
 		if((Input.GetAxis("Horizontal") > 0 && knockBackTime <= Time.time) || knockBackX > 0){
 			forwardDir = 1;
 		}
@@ -55,17 +59,22 @@ public class Player : MonoBehaviour {
 			vertColor = Color.green;
 		}
 
-		hit1 = Physics2D.Raycast(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - (GetComponent<BoxCollider2D>().size.y * 0.5f)*raycastVerticalFlip), -Vector2.up*raycastVerticalFlip, GetComponent<BoxCollider2D>().size.y * 0.01f, groundLayerMask);
-		hit2 = Physics2D.Raycast(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - (GetComponent<BoxCollider2D>().size.y * 0.5f)*raycastVerticalFlip), -Vector2.up*raycastVerticalFlip, GetComponent<BoxCollider2D>().size.y * 0.01f, groundLayerMask);
+		hit1 = Physics2D.Raycast(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.4f, transform.position.y - (GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f)*raycastVerticalFlip), -Vector2.up*raycastVerticalFlip, GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.01f, groundLayerMask);
+		hit2 = Physics2D.Raycast(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.4f, transform.position.y - (GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f)*raycastVerticalFlip), -Vector2.up*raycastVerticalFlip, GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.01f, groundLayerMask);
 
 		if (downSpeed <= 0) {
-			slopeHit = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f)), -Vector2.up, GetComponent<BoxCollider2D> ().size.y * 0.01f, slopeLayerMask);
+			slopeHit = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.5f)), -Vector2.up, GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.01f, slopeLayerMask);
 		} else {
 			slopeHit = new RaycastHit2D();
 		}
 
-		hitForward1 = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - GetComponent<BoxCollider2D> ().size.y * 0.4f), Vector3.right * forwardDir, GetComponent<BoxCollider2D> ().size.x * 0.55f, groundLayerMask);
-		hitForward2 = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y + GetComponent<BoxCollider2D> ().size.y * 0.4f), Vector3.right * forwardDir, GetComponent<BoxCollider2D> ().size.x * 0.55f, groundLayerMask);
+		hitForward1 = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.4f), Vector3.right * forwardDir, GetComponent<BoxCollider2D> ().size.x * transform.localScale.x * 0.55f, groundLayerMask);
+		hitForward2 = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y + GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.4f), Vector3.right * forwardDir, GetComponent<BoxCollider2D> ().size.x * transform.localScale.x * 0.55f, groundLayerMask);
+
+		if(slopeHit.collider == null && downSpeed == 0) {
+			slopeHitExtender = 5;
+			slopeHit = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.5f)), -Vector2.up, GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.01f*slopeHitExtender, slopeLayerMask);
+		}
 
 		angleX = 1;
 		angleY = 0;
@@ -74,14 +83,16 @@ public class Player : MonoBehaviour {
 			angleY = Mathf.Sin (slopeHit.collider.gameObject.transform.eulerAngles.z*Mathf.Deg2Rad);
 			//transform.eulerAngles = new Vector3(0,0,slopeHit.collider.gameObject.transform.eulerAngles.z);
 		}
+
 		//Debug.Log ("AngleX: "+angleX);
 
-		//Debug.DrawLine(new Vector2(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.4f), new Vector3(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.4f, 0) + Vector3.right * forwardDir * GetComponent<BoxCollider2D>().size.x * 0.55f+Vector3.right*0.01f, Color.blue, 1);
-		//Debug.DrawLine(new Vector2(transform.position.x, transform.position.y + GetComponent<BoxCollider2D>().size.y * 0.4f), new Vector3(transform.position.x, transform.position.y + GetComponent<BoxCollider2D>().size.y * 0.4f, 0) + Vector3.right * forwardDir * GetComponent<BoxCollider2D>().size.x * 0.55f+Vector3.right*0.01f, Color.blue, 1);
+		//Debug.DrawLine(new Vector2(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.4f), new Vector3(transform.position.x, transform.position.y - GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.4f, 0) + Vector3.right * forwardDir * GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.55f+Vector3.right*0.01f, Color.blue, 1);
+		//Debug.DrawLine(new Vector2(transform.position.x, transform.position.y + GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.4f), new Vector3(transform.position.x, transform.position.y + GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.4f, 0) + Vector3.right * forwardDir * GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.55f+Vector3.right*0.01f, Color.blue, 1);
 
-		Debug.DrawLine(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - (GetComponent<BoxCollider2D>().size.y * 0.5f)*raycastVerticalFlip), new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f*raycastVerticalFlip) - Vector2.up*raycastVerticalFlip * GetComponent<BoxCollider2D>().size.y * 0.01f, vertColor, 1);
-		Debug.DrawLine(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - (GetComponent<BoxCollider2D>().size.y * 0.5f)*raycastVerticalFlip), new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y * 0.5f*raycastVerticalFlip) - Vector2.up*raycastVerticalFlip * GetComponent<BoxCollider2D>().size.y * 0.01f, vertColor, 1);
-		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f, Color.cyan, 1);
+		//Debug.DrawLine(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y - (GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f)*raycastVerticalFlip), new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f*raycastVerticalFlip) - Vector2.up*raycastVerticalFlip * GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.01f, vertColor, 1);
+		//Debug.DrawLine(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y - (GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f)*raycastVerticalFlip), new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f*raycastVerticalFlip) - Vector2.up*raycastVerticalFlip * GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.01f, vertColor, 1);
+		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y*slopeHitExtender, Color.cyan, 1);
+		Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
 
 		if(!inAir) { //check if there still is ground beneath the player's feet
 			if(hit1.collider == null && hit2.collider == null) {
@@ -97,34 +108,37 @@ public class Player : MonoBehaviour {
 					if(hit1.collider != null){
 						hit1.collider.gameObject.GetComponent<SpriteRenderer>().color = Color.blue;
 					}
-					else if(hit2.collider != null){
+					else if(hit2.collider != null) {
 						hit2.collider.gameObject.GetComponent<SpriteRenderer>().color = Color.blue;
 					}
 				}
 				jump = false;
 				downSpeed = 0;
+				finalJumpTime = Time.time;
+				//Debug.Log("Time: "+(-initialJumpTime+finalJumpTime));
 				//Debug.Log("AngleX: "+angleX+" AngleY: "+angleY);
 				if(angleX == 1){
 					if(hit1.collider != null){
-						transform.position = new Vector3(transform.position.x, hit1.collider.transform.position.y + (hit1.collider.GetComponent<BoxCollider2D>().size.y*0.5f+GetComponent<BoxCollider2D>().size.y*0.5f)*raycastVerticalFlip, 0);
+						transform.position = new Vector3(transform.position.x, hit1.collider.transform.position.y + (hit1.collider.GetComponent<BoxCollider2D>().size.y*0.5f*hit1.collider.transform.localScale.y+GetComponent<BoxCollider2D>().size.y*0.5f*transform.localScale.y)*raycastVerticalFlip, 0);
 					}
-					else {
-						transform.position = new Vector3(transform.position.x, hit2.collider.transform.position.y + (hit2.collider.GetComponent<BoxCollider2D>().size.y*0.5f+GetComponent<BoxCollider2D>().size.y*0.5f)*raycastVerticalFlip, 0);
+					else if(hit2.collider != null) {
+						transform.position = new Vector3(transform.position.x, hit2.collider.transform.position.y + (hit2.collider.GetComponent<BoxCollider2D>().size.y*0.5f*hit2.collider.transform.localScale.y+GetComponent<BoxCollider2D>().size.y*0.5f*transform.localScale.y)*raycastVerticalFlip, 0);
 					}
 				}
 				else{
-					transform.position = new Vector3(transform.position.x, Mathf.Tan(slopeHit.collider.transform.eulerAngles.z*Mathf.Deg2Rad)*(transform.position.x - slopeHit.collider.transform.position.x)+ slopeHit.collider.transform.position.y + (slopeHit.collider.GetComponent<BoxCollider2D>().size.y*0.5f+GetComponent<BoxCollider2D>().size.y*0.5f/Mathf.Cos (slopeHit.collider.transform.eulerAngles.z*Mathf.Deg2Rad)), 0);
+					transform.position = new Vector3(transform.position.x, Mathf.Tan(slopeHit.collider.transform.eulerAngles.z*Mathf.Deg2Rad)*(transform.position.x - slopeHit.collider.transform.position.x)+ slopeHit.collider.transform.position.y + GetComponent<BoxCollider2D>().size.y*0.5f*transform.localScale.y + (slopeHit.collider.GetComponent<BoxCollider2D>().size.y*0.5f*slopeHit.transform.localScale.y/Mathf.Cos (slopeHit.collider.transform.eulerAngles.z*Mathf.Deg2Rad)), 0);
 				}
 				yCorrected = true;
 			}
 		}
 
 		if(Input.GetButtonDown("Jump") && !jump && !inAir) { //handles jumping
+			initialJumpTime = Time.time;
 			jump = true;
 			inAir = true;
-			downSpeed = 0.2f;
-			hit1 = Physics2D.Raycast(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y + (GetComponent<BoxCollider2D>().size.y * 0.5f+0.01f)), Vector2.up, GetComponent<BoxCollider2D>().size.y * 0.01f, groundLayerMask);
-			hit2 = Physics2D.Raycast(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f, transform.position.y + (GetComponent<BoxCollider2D>().size.y * 0.5f+0.01f)), Vector2.up, GetComponent<BoxCollider2D>().size.y * 0.01f, groundLayerMask);
+			downSpeed = 0.225f;
+			hit1 = Physics2D.Raycast(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y + (GetComponent<BoxCollider2D>().size.y* transform.localScale.y * 0.5f+0.01f)), Vector2.up, GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.01f, groundLayerMask);
+			hit2 = Physics2D.Raycast(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y + (GetComponent<BoxCollider2D>().size.y* transform.localScale.y * 0.5f+0.01f)), Vector2.up, GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.01f, groundLayerMask);
 			if(hit1.collider != null || hit2.collider != null){
 				downSpeed = 0;
 				inAir = false;
@@ -137,14 +151,16 @@ public class Player : MonoBehaviour {
 		}
 		if(((hitForward1.collider != null && hitForward1.collider.tag == "Ground") || (hitForward2.collider != null && hitForward2.collider.tag == "Ground")) && !yCorrected) {  //handles horizontal collisions
 			if(hitForward1.collider != null){
-				transform.position = new Vector3(hitForward1.collider.transform.position.x - (hitForward1.collider.GetComponent<BoxCollider2D>().size.x*0.5f+GetComponent<BoxCollider2D>().size.x*0.5f)*forwardDir,transform.position.y,transform.position.z);
+				transform.position = new Vector3(hitForward1.collider.transform.position.x - (hitForward1.collider.GetComponent<BoxCollider2D>().size.x*0.5f*hitForward1.collider.transform.localScale.x+GetComponent<BoxCollider2D>().size.x*0.5f*transform.localScale.x)*forwardDir,transform.position.y,transform.position.z);
 			}
 			else{
-				transform.position = new Vector3(hitForward2.collider.transform.position.x - (hitForward2.collider.GetComponent<BoxCollider2D>().size.x*0.5f+GetComponent<BoxCollider2D>().size.x*0.5f)*forwardDir,transform.position.y,transform.position.z);
+				transform.position = new Vector3(hitForward2.collider.transform.position.x - (hitForward2.collider.GetComponent<BoxCollider2D>().size.x*0.5f*hitForward2.collider.transform.localScale.x+GetComponent<BoxCollider2D>().size.x*0.5f*transform.localScale.x)*forwardDir,transform.position.y,transform.position.z);
 			}
 			collision = 0;
 		}
 		GameObject.FindGameObjectWithTag("HP").GetComponent<Text>().text = "HP: " + hp;
+		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y, Color.cyan, 1);
+		Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
 	}
 
 	void FixedUpdate()
@@ -153,8 +169,13 @@ public class Player : MonoBehaviour {
 			knockBackX = 0;
 		}
 
+		if(slopeHit.collider != null) {
+			//downSpeed = 0;
+		}
+
 		rb2D.MovePosition(new Vector3(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, transform.position.y + downSpeed + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleY, 0));
-		mainCamTransform.GetComponent<Rigidbody2D>().MovePosition(new Vector2(mainCamTransform.position.x + (transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x), mainCamTransform.position.y + (transform.position.y - mainCamTransform.position.y)*(transform.position.y - mainCamTransform.position.y)*(transform.position.y - mainCamTransform.position.y)));
+
+		mainCamTransform.GetComponent<Rigidbody2D>().MovePosition(new Vector2(mainCamTransform.position.x + (transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x), mainCamTransform.position.y + (transform.position.y - mainCamTransform.position.y+2)*(transform.position.y - mainCamTransform.position.y+2)*(transform.position.y - mainCamTransform.position.y+2)));
 		if(inAir) {
 			if(!jump) {
 				downSpeed = -maxDownSpeed;
