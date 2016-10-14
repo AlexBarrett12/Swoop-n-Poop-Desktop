@@ -15,6 +15,7 @@ public class BirdAI : MonoBehaviour {
 	private float initialYSwoop;
 	private float targetHeight;
 	private float swoopTargetHeight;
+	private bool turning;
 
 	public int swoopDmg = 5;
 	public float droppingSpeed = 1;
@@ -56,7 +57,7 @@ public class BirdAI : MonoBehaviour {
 	{
 		DirY = 0;
 		if (swoop) {
-			if (attackCooldown - Time.time > 3) {
+			if (attackCooldown - Time.time > 3 && transform.position.y > swoopTargetHeight) {
 				DirY = -0.08f;
 			}
 			if (attackCooldown - Time.time <= 3 && attackCooldown - Time.time >= 1) {
@@ -76,12 +77,12 @@ public class BirdAI : MonoBehaviour {
 			if (attackCooldown - Time.time <= 0) {
 				swoop = false;
 			}
-		} 
+		}
 			
 		if (myTree.GetComponent<BoxCollider2D> ().bounds.max.x > GameObject.FindGameObjectWithTag ("Player").transform.position.x && myTree.GetComponent<BoxCollider2D> ().bounds.min.x < GameObject.FindGameObjectWithTag ("Player").transform.position.x) {
-			if (transform.position.x > GameObject.FindGameObjectWithTag ("Player").transform.position.x) {
+			if(transform.position.x > GameObject.FindGameObjectWithTag("Player").transform.position.x) {
 				DirX -= deltaDir;
-				if (DirX < -maxSpeed) {
+				if(DirX < -maxSpeed) {
 					DirX = -maxSpeed;
 				}
 			}
@@ -92,6 +93,7 @@ public class BirdAI : MonoBehaviour {
 					DirX = maxSpeed;
 				}
 			}
+
 		} else {
 			targetHeight = myTree.transform.position.y+0.75f;
 			swoop = false;
