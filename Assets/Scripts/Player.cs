@@ -14,19 +14,20 @@ public class Player : MonoBehaviour {
 	private RaycastHit2D hitForward2;
 	private RaycastHit2D hit1;  //These raycasts check what is beneath the player on either side.
 	private RaycastHit2D hit2;
-	private RaycastHit2D slopeHit;
-	private int forwardDir;
-	private int collision;
+	private RaycastHit2D slopeHit;  //This calculates the gradient of the slope beneath the player if there is one.
+	private RaycastHit2D futureSlopeHit;  //Currently unused. This predicts where the player will be next frame and adjusts the player accordingly.
+	private int forwardDir;  //Determines which direction the player is travelling in, used for horizontal collision.
+	private int collision;  //Stops the player if there is a collision
 	private Transform mainCamTransform;
-	private bool yCorrected;
+	private bool yCorrected;  //Allows vertical collision to take place before horizontal collision if there is any vertical collision.
 	private float knockBackTime;
-	private float knockBackX;
-	private int raycastVerticalFlip = 1;
-	private float angleX;
+	private float knockBackX;  //Knocks back the player ta this rate.
+	private int raycastVerticalFlip = 1;  //Flips vertical raycast vertically.
+	private float angleX;  //AngleX and AngleY are used to calculate how that player moves up a slope.
 	private float angleY;
-	private float initialJumpTime;
+	private float initialJumpTime;  //Testing variables used to check if frame independence exists.
 	private float finalJumpTime;
-	private float slopeHitExtender = 1;
+	private float slopeHitExtender = 1; //It extended the slopeHit raycast if there was no hit.
 
 	public int hp = 10;
 	public float invulnTime;
@@ -66,14 +67,18 @@ public class Player : MonoBehaviour {
 			slopeHit = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.5f)), -Vector2.up, GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.01f, slopeLayerMask);
 		} else {
 			slopeHit = new RaycastHit2D();
+			futureSlopeHit = new RaycastHit2D();
 		}
 
 		hitForward1 = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.4f), Vector3.right * forwardDir, GetComponent<BoxCollider2D> ().size.x * transform.localScale.x * 0.55f, groundLayerMask);
 		hitForward2 = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y + GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.4f), Vector3.right * forwardDir, GetComponent<BoxCollider2D> ().size.x * transform.localScale.x * 0.55f, groundLayerMask);
 
-		if(slopeHit.collider == null && downSpeed == 0) {
+		if(slopeHit.collider == null && downSpeed == 0) {  //This double checks if there actually isn't a slope beneath the player, in case the player has interpolated the slope too far. Would work better with a future slop check but I couldn't get it working.
 			slopeHitExtender = 5;
 			slopeHit = Physics2D.Raycast (new Vector2 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.5f)), -Vector2.up, GetComponent<BoxCollider2D> ().size.y * transform.localScale.y * 0.01f*slopeHitExtender, slopeLayerMask);
+			if(slopeHit.collider != null && slopeHit.collider.transform.eulerAngles.z == 0) {
+				slopeHit = new RaycastHit2D();
+			}
 		}
 
 		angleX = 1;
@@ -91,11 +96,12 @@ public class Player : MonoBehaviour {
 
 		//Debug.DrawLine(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y - (GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f)*raycastVerticalFlip), new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f*raycastVerticalFlip) - Vector2.up*raycastVerticalFlip * GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.01f, vertColor, 1);
 		//Debug.DrawLine(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y - (GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f)*raycastVerticalFlip), new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x*transform.localScale.x * 0.4f, transform.position.y - GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.5f*raycastVerticalFlip) - Vector2.up*raycastVerticalFlip * GetComponent<BoxCollider2D>().size.y*transform.localScale.y * 0.01f, vertColor, 1);
-		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y*slopeHitExtender, Color.cyan, 1);
-		Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
+
+		//Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y*slopeHitExtender, Color.cyan, 1);
+		//Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.red, 2);
 
 		if(!inAir) { //check if there still is ground beneath the player's feet
-			if(hit1.collider == null && hit2.collider == null) {
+			if(hit1.collider == null && hit2.collider == null && slopeHit.collider == null) {
 				inAir = true;
 				jump = true;
 			}
@@ -136,7 +142,7 @@ public class Player : MonoBehaviour {
 			initialJumpTime = Time.time;
 			jump = true;
 			inAir = true;
-			downSpeed = 0.225f;
+			downSpeed = 0.2f;
 			hit1 = Physics2D.Raycast(new Vector2(transform.position.x + GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y + (GetComponent<BoxCollider2D>().size.y* transform.localScale.y * 0.5f+0.01f)), Vector2.up, GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.01f, groundLayerMask);
 			hit2 = Physics2D.Raycast(new Vector2(transform.position.x - GetComponent<BoxCollider2D>().size.x * 0.4f*transform.localScale.x, transform.position.y + (GetComponent<BoxCollider2D>().size.y* transform.localScale.y * 0.5f+0.01f)), Vector2.up, GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.01f, groundLayerMask);
 			if(hit1.collider != null || hit2.collider != null){
@@ -159,21 +165,34 @@ public class Player : MonoBehaviour {
 			collision = 0;
 		}
 		GameObject.FindGameObjectWithTag("HP").GetComponent<Text>().text = "HP: " + hp;
-		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y, Color.cyan, 1);
-		Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
+
+		//Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y, Color.yellow, 1);
+		//Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
+
+		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y*slopeHitExtender, Color.cyan, 1);
+		Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.green, 2);
 	}
 
 	void FixedUpdate()
 	{
+
 		if(knockBackTime <= Time.time && knockBackX != 0) {
 			knockBackX = 0;
 		}
 
+		rb2D.MovePosition(new Vector3(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, transform.position.y + downSpeed + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleY, 0));
+
 		if(slopeHit.collider != null) {
-			//downSpeed = 0;
+			futureSlopeHit = Physics2D.Raycast(new Vector2(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, transform.position.y - (GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.5f)), -Vector2.up, GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.05f, slopeLayerMask);
+		}
+		else {
+			futureSlopeHit = new RaycastHit2D();
 		}
 
-		rb2D.MovePosition(new Vector3(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, transform.position.y + downSpeed + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleY, 0));
+		//Adjusts the player accordingly based on the next slope if there is one.
+		if(futureSlopeHit.collider != null && futureSlopeHit.collider.transform.eulerAngles.z != slopeHit.collider.transform.eulerAngles.z) {
+			rb2D.MovePosition(new Vector2(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, Mathf.Tan(futureSlopeHit.collider.transform.eulerAngles.z*Mathf.Deg2Rad)*(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX - futureSlopeHit.collider.transform.position.x)+ futureSlopeHit.collider.transform.position.y + GetComponent<BoxCollider2D>().size.y*0.5f*transform.localScale.y + (futureSlopeHit.collider.GetComponent<BoxCollider2D>().size.y*0.5f*futureSlopeHit.transform.localScale.y/Mathf.Cos (futureSlopeHit.collider.transform.eulerAngles.z*Mathf.Deg2Rad))));
+		}
 
 		mainCamTransform.GetComponent<Rigidbody2D>().MovePosition(new Vector2(mainCamTransform.position.x + (transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x)*(transform.position.x - mainCamTransform.position.x), mainCamTransform.position.y + (transform.position.y - mainCamTransform.position.y+2)*(transform.position.y - mainCamTransform.position.y+2)*(transform.position.y - mainCamTransform.position.y+2)));
 		if(inAir) {
@@ -181,21 +200,26 @@ public class Player : MonoBehaviour {
 				downSpeed = -maxDownSpeed;
 			}
 			else {
-				downSpeed -= 0.02f;
+				downSpeed -= 0.01f;
 				if(downSpeed <= -maxDownSpeed) {
 					jump = false;
 					downSpeed = -maxDownSpeed;
 				}
 			}
 		}
+		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y, Color.yellow, 1);
+		Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
 	}
+
 	public void hurt(int dmg, float deltaInvuln, Vector2 dir)
 	{
 		if(invulnTime <= Time.time) {
 			hp -= dmg;
 			invulnTime += deltaInvuln;
 			knockBackX = dir.x*0.15f;
-			knockBackTime = Time.time + 0.2f;
+			if(knockBackX != 0) {
+				knockBackTime = Time.time + 0.2f;
+			}
 		}
 	}
 }
