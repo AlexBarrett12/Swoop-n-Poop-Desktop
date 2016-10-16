@@ -22,6 +22,7 @@ public class BirdAI : MonoBehaviour {
 	public float swoopSpeed = 5;
 	public GameObject dropping;
 	public GameObject myTree;
+	public int hp = 5;
 
 	void Start () 
 	{
@@ -51,6 +52,9 @@ public class BirdAI : MonoBehaviour {
 				swoopTargetHeight = GameObject.FindGameObjectWithTag("Player").transform.position.y;
 			}
 		}
+		if(hp <= 0) {
+			Destroy(gameObject);
+		}
 	}
 
 	void FixedUpdate()
@@ -79,7 +83,7 @@ public class BirdAI : MonoBehaviour {
 			}
 		}
 			
-		if (myTree.GetComponent<BoxCollider2D> ().bounds.max.x > GameObject.FindGameObjectWithTag ("Player").transform.position.x && myTree.GetComponent<BoxCollider2D> ().bounds.min.x < GameObject.FindGameObjectWithTag ("Player").transform.position.x) {
+		if (myTree == null || (myTree.GetComponent<BoxCollider2D> ().bounds.max.x > GameObject.FindGameObjectWithTag ("Player").transform.position.x && myTree.GetComponent<BoxCollider2D> ().bounds.min.x < GameObject.FindGameObjectWithTag ("Player").transform.position.x)) {
 			if(transform.position.x > GameObject.FindGameObjectWithTag("Player").transform.position.x) {
 				DirX -= deltaDir;
 				if(DirX < -maxSpeed) {
@@ -131,6 +135,31 @@ public class BirdAI : MonoBehaviour {
 		}
 
 		rb2D.MovePosition(new Vector2(transform.position.x + DirX, transform.position.y+DirY));
+
+		if(spriteRend.color != Color.white) {
+			byte red = 0;
+			byte blue = 0;
+			byte green = 0;
+			if(spriteRend.color.r * 255 + 5 >= 255) {
+				red = 255;
+			}
+			else {
+				red = (byte)(spriteRend.color.r * 255 + 5);
+			}
+			if(spriteRend.color.b * 255 + 5 >= 255) {
+				blue = 255;
+			}
+			else {
+				blue = (byte)(spriteRend.color.b * 255 + 5);
+			}
+			if(spriteRend.color.g * 255 + 5 >= 255) {
+				green = 255;
+			}
+			else {
+				green = (byte)(spriteRend.color.g * 255 + 5);
+			}
+			spriteRend.color = new Color32(red, green, blue, 255);
+		}
 	}
 
 	void OnTriggerEnter2D(Collider2D obj)
@@ -142,5 +171,11 @@ public class BirdAI : MonoBehaviour {
 			}
 			obj.GetComponent<Player>().hurt(swoopDmg, 0, new Vector2(xDir, 0));
 		}
+	}
+
+	public void hurt(int dmg)
+	{
+		hp -= dmg;
+		spriteRend.color = Color.red;
 	}
 }

@@ -29,12 +29,18 @@ public class Player : MonoBehaviour {
 	private float finalJumpTime;
 	private float slopeHitExtender = 1; //It extended the slopeHit raycast if there was no hit.
 
+	private float attackCooldown;
+
+	public int ammo;
 	public int hp = 10;
 	public float invulnTime;
 	public LayerMask groundLayerMask;
 	public LayerMask slopeLayerMask;
+	public string currentWeapon;
+	public GameObject stone;
+	public GameObject holdingWeapon;
 
-	void Start () 
+	void Start ()
 	{
 		rb2D = GetComponent<Rigidbody2D>();
 		mainCamTransform = Camera.main.transform;
@@ -169,13 +175,16 @@ public class Player : MonoBehaviour {
 		//Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y, Color.yellow, 1);
 		//Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
 
-		Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y*slopeHitExtender, Color.cyan, 1);
-		Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.green, 2);
+		//Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y*slopeHitExtender, Color.cyan, 1);
+		//Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.green, 2);
+
+		if(Input.GetButtonDown("Fire1") && currentWeapon != "") {
+			fireMethod();
+		}
 	}
 
 	void FixedUpdate()
 	{
-
 		if(knockBackTime <= Time.time && knockBackX != 0) {
 			knockBackX = 0;
 		}
@@ -200,7 +209,7 @@ public class Player : MonoBehaviour {
 				downSpeed = -maxDownSpeed;
 			}
 			else {
-				downSpeed -= 0.01f;
+				downSpeed -= 0.015f;
 				if(downSpeed <= -maxDownSpeed) {
 					jump = false;
 					downSpeed = -maxDownSpeed;
@@ -221,5 +230,62 @@ public class Player : MonoBehaviour {
 				knockBackTime = Time.time + 0.2f;
 			}
 		}
+	}
+
+	public void dropWeapon()
+	{
+		holdingWeapon.GetComponent<SpriteRenderer>().sprite = null;
+		holdingWeapon.transform.localScale = new Vector3(1, 1, 1);
+		(Instantiate(weaponGameObject(currentWeapon), transform.position, Quaternion.identity) as GameObject).GetComponent<PickupMaster>().ammo = ammo;
+		currentWeapon = null;
+		ammo = 0;
+	}
+
+	public void pickupWeapon(string weapon, int weaponAmmo, Vector3 scale)
+	{
+		currentWeapon = weapon;
+		ammo = weaponAmmo;
+		holdingWeapon.GetComponent<SpriteRenderer>().sprite = weaponGameObject(weapon).GetComponent<SpriteRenderer>().sprite;
+		holdingWeapon.transform.localScale = scale;
+	}
+
+	private GameObject weaponGameObject(string weapon)
+	{
+		switch (weapon) {
+			case "stone":
+				return stone;
+		}
+		return null;
+	}
+
+	private void fireMethod()
+	{
+		switch (currentWeapon) {
+			case "stone":
+				throwWeapon(currentWeapon);
+				break;
+		}
+		ammo--;
+		if(ammo <= 0) {
+			currentWeapon = "";
+			holdingWeapon.GetComponent<SpriteRenderer>().sprite = null;
+		}
+	}
+
+	private void throwWeapon(string weapon)
+	{
+		GameObject tempThrown = Instantiate(weaponGameObject(weapon), holdingWeapon.transform.position, Quaternion.identity) as GameObject;
+		tempThrown.GetComponent<PickupMaster>().thrown = true;
+		float xDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition).x - holdingWeapon.transform.position.x);
+		float yDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition).y - holdingWeapon.transform.position.y);
+		int negX = 1;
+		int negY = 1;
+		if(xDiff < 0) {
+			negX = -1;
+		}
+		if(yDiff < 0) {
+			negY = -1;
+		}
+		tempThrown.GetComponent<PickupMaster>().throwDir = new Vector2(negX*xDiff*xDiff/(xDiff*xDiff+yDiff*yDiff), negY*yDiff*yDiff/(xDiff*xDiff+yDiff*yDiff));
 	}
 }
