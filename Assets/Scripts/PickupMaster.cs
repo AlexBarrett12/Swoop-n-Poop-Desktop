@@ -74,15 +74,15 @@ public class PickupMaster : MonoBehaviour {
 			dontDestroy = false;
 			switch (PickupType) {
 				case "health":
-					if(obj.GetComponent<Player>().hp == maxHealth) {
+					if(Player.saveStuff.hp == maxHealth) {
 						dontDestroy = true;
 						GameObject.FindGameObjectWithTag("PickupText").GetComponent<Text>().text = "Already at Max Health";
 					}
-					else if(obj.GetComponent<Player>().hp + 5 > maxHealth) {
-						obj.GetComponent<Player>().hp = maxHealth;
+					else if(Player.saveStuff.hp + 5 > maxHealth) {
+						Player.saveStuff.hp = maxHealth;
 					}
 					else {
-						obj.GetComponent<Player>().hp += 5;
+						Player.saveStuff.hp += 5;
 					}
 					break;
 				default:

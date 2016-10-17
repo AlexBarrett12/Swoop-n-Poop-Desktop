@@ -47,9 +47,16 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\BirdAI.cs" />
+     <Compile Include="Assets\Scripts\Character.cs" />
      <Compile Include="Assets\Scripts\FloorSpawner.cs" />
+     <Compile Include="Assets\Scripts\Game.cs" />
+     <Compile Include="Assets\Scripts\MenuScript.cs" />
      <Compile Include="Assets\Scripts\PickupMaster.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
+     <Compile Include="Assets\Scripts\SaveLoad (2).cs" />
+     <Compile Include="Assets\Scripts\SaveLoad.cs" />
+     <Compile Include="Assets\Scripts\Upgrade.cs" />
+     <Compile Include="Assets\Scripts\Upgrades.cs" />
      <Compile Include="Assets\Scripts\dropping.cs" />
      <Compile Include="Assets\Scripts\parralaxBackground.cs" />
  <Reference Include="UnityEngine.UI">

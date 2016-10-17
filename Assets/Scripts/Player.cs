@@ -27,23 +27,26 @@ public class Player : MonoBehaviour {
 	private float angleY;
 	private float initialJumpTime;  //Testing variables used to check if frame independence exists.
 	private float finalJumpTime;
-	private float slopeHitExtender = 1; //It extended the slopeHit raycast if there was no hit.
+	private float slopeHitExtender = 1; //This extended the slopeHit raycast if there was no hit.
 
 	private float attackCooldown;
 
 	public int ammo;
-	public int hp = 10;
+	//public int hp = 10;  //moved to saveStuff.hp
 	public float invulnTime;
 	public LayerMask groundLayerMask;
 	public LayerMask slopeLayerMask;
 	public string currentWeapon;
 	public GameObject stone;
 	public GameObject holdingWeapon;
+	public static StuffToSave saveStuff = new StuffToSave();  //Holds everything that the player might save, i.e. score, upgrades, lives e.c.t
 
 	void Start ()
 	{
-		rb2D = GetComponent<Rigidbody2D>();
+		rb2D = GetComponent<Rigidbody2D> ();
 		mainCamTransform = Camera.main.transform;
+		//SaveLoad.Save();
+		saveStuff = SaveLoad.Load();
 	}
 
 	void Update () 
@@ -170,7 +173,7 @@ public class Player : MonoBehaviour {
 			}
 			collision = 0;
 		}
-		GameObject.FindGameObjectWithTag("HP").GetComponent<Text>().text = "HP: " + hp;
+		GameObject.FindGameObjectWithTag("HP").GetComponent<Text>().text = "HP: " + Player.saveStuff.hp;
 
 		//Debug.DrawLine(new Vector3 (transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0), new Vector3(transform.position.x, transform.position.y - (GetComponent<BoxCollider2D> ().size.y * 0.5f * transform.localScale.y), 0) -Vector3.up*GetComponent<BoxCollider2D> ().size.y * 0.01f * transform.localScale.y, Color.yellow, 1);
 		//Debug.DrawLine(transform.position, new Vector3(0.01f, 0, 0) + transform.position, Color.blue, 2);
@@ -180,6 +183,13 @@ public class Player : MonoBehaviour {
 
 		if(Input.GetButtonDown("Fire1") && currentWeapon != "") {
 			fireMethod();
+		}
+
+		if(Input.GetKeyDown(KeyCode.F5)) {
+			SaveLoad.Save();
+		}
+		if(Input.GetKeyDown(KeyCode.F6)) {
+			saveStuff = SaveLoad.Load();
 		}
 	}
 
@@ -223,7 +233,7 @@ public class Player : MonoBehaviour {
 	public void hurt(int dmg, float deltaInvuln, Vector2 dir)
 	{
 		if(invulnTime <= Time.time) {
-			hp -= dmg;
+			saveStuff.hp -= dmg;
 			invulnTime += deltaInvuln;
 			knockBackX = dir.x*0.15f;
 			if(knockBackX != 0) {
