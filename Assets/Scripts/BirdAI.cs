@@ -15,9 +15,9 @@ public class BirdAI : MonoBehaviour {
 	private float initialYSwoop;
 	private float targetHeight;
 	private float swoopTargetHeight;
-	private bool turning;
+	private bool atTree;
 
-	public int swoopDmg = 5;
+	public int swoopDmg = 3;
 	public float droppingSpeed = 1;
 	public float swoopSpeed = 5;
 	public GameObject dropping;
@@ -40,16 +40,17 @@ public class BirdAI : MonoBehaviour {
 			//spriteRend.flipX = false;
 		}
 		if(attackCooldown <= Time.time && transform.position.x < GameObject.FindGameObjectWithTag("Player").transform.position.x + 1 && transform.position.x > GameObject.FindGameObjectWithTag("Player").transform.position.x - 1) {
-			if(Random.Range(0, 2) == 0) {
+			if(Random.Range(0, 2) == 0 && !atTree) {
 				GameObject droppingTemp = Instantiate(dropping, transform.position, Quaternion.identity) as GameObject;
 				droppingTemp.GetComponent<dropping>().dir = new Vector2(DirX*0.1f, -0.1f);
 				attackCooldown = Time.time + droppingSpeed;
 			}
 			else {
 				swoop = true;
+				atTree = false;
 				attackCooldown = Time.time + swoopSpeed;
 				initialYSwoop = transform.position.y;
-				swoopTargetHeight = GameObject.FindGameObjectWithTag("Player").transform.position.y;
+				swoopTargetHeight = GameObject.FindGameObjectWithTag("Player").transform.position.y + GameObject.FindGameObjectWithTag("Player").GetComponent<Player>().yMovement*14;
 			}
 		}
 		if(hp <= 0) {
@@ -101,9 +102,6 @@ public class BirdAI : MonoBehaviour {
 		} else {
 			targetHeight = myTree.transform.position.y+0.75f;
 			swoop = false;
-			if(transform.position.y < initialYSwoop){
-				DirY = 0.08f;
-			}
 			if(myTree.transform.position.x < transform.position.x){
 				DirX -= deltaDir;
 				if (DirX < -maxSpeed) {
@@ -118,6 +116,7 @@ public class BirdAI : MonoBehaviour {
 			}
 			if(myTree.transform.position.x-0.2 < transform.position.x && myTree.transform.position.x+0.2 > transform.position.x){
 				DirX = 0;
+				atTree = true;
 			}
 		}
 

@@ -112,7 +112,7 @@ public class PickupMaster : MonoBehaviour {
 						GameObject.FindGameObjectWithTag("PickupText").GetComponent<Text>().text = "";
 					}
 					else {
-						GameObject.FindGameObjectWithTag("PickupText").GetComponent<Text>().text = "Press E";
+						GameObject.FindGameObjectWithTag("PickupText").GetComponent<Text>().text = "Press E to pickup "+weaponName;
 						dontDestroy = true;
 					}
 					break;

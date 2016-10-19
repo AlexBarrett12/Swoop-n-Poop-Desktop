@@ -37,15 +37,18 @@ public class Player : MonoBehaviour {
 	public LayerMask groundLayerMask;
 	public LayerMask slopeLayerMask;
 	public string currentWeapon;
-	public GameObject stone;
 	public GameObject holdingWeapon;
 	public static StuffToSave saveStuff = new StuffToSave();  //Holds everything that the player might save, i.e. score, upgrades, lives e.c.t
+	public float yMovement;  //Used by birds to calculate where the player will be when it swoops
+	public GameObject[] weapons = new GameObject[2];  //Array of all the weapons used by the player. 0 for stone, 1 for gun e.t.c;
+	public GameObject[] bullets = new GameObject[2];
 
 	void Start ()
 	{
 		rb2D = GetComponent<Rigidbody2D> ();
 		mainCamTransform = Camera.main.transform;
 		//SaveLoad.Save();
+		//SaveLoad.clearSave ();
 		saveStuff = SaveLoad.Load();
 	}
 
@@ -199,7 +202,9 @@ public class Player : MonoBehaviour {
 			knockBackX = 0;
 		}
 
-		rb2D.MovePosition(new Vector3(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, transform.position.y + downSpeed + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleY, 0));
+		rb2D.MovePosition(new Vector2(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, transform.position.y + downSpeed + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleY));
+
+		yMovement = (Input.GetAxis ("Horizontal") * moveSpeed * collision + knockBackX) * angleY;
 
 		if(slopeHit.collider != null) {
 			futureSlopeHit = Physics2D.Raycast(new Vector2(transform.position.x + (Input.GetAxis("Horizontal")*moveSpeed*collision+knockBackX)*angleX, transform.position.y - (GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.5f)), -Vector2.up, GetComponent<BoxCollider2D>().size.y * transform.localScale.y * 0.05f, slopeLayerMask);
@@ -239,6 +244,14 @@ public class Player : MonoBehaviour {
 			if(knockBackX != 0) {
 				knockBackTime = Time.time + 0.2f;
 			}
+			if(saveStuff.hp <= 0){
+				if(GameObject.FindGameObjectWithTag("GameManager")!= null){
+
+				}
+				else{
+					Application.LoadLevel(Application.loadedLevel);
+				}
+			}
 		}
 	}
 
@@ -262,8 +275,10 @@ public class Player : MonoBehaviour {
 	private GameObject weaponGameObject(string weapon)
 	{
 		switch (weapon) {
-			case "stone":
-				return stone;
+		case "stone":
+			return weapons [0];
+		case "gun":
+			return weapons [1];
 		}
 		return null;
 	}
@@ -271,31 +286,45 @@ public class Player : MonoBehaviour {
 	private void fireMethod()
 	{
 		switch (currentWeapon) {
-			case "stone":
-				throwWeapon(currentWeapon);
-				break;
+		case "stone":
+			throwWeapon (currentWeapon, 1);
+			break;
+		case "gun":
+			if (ammo == 0) {
+				throwWeapon (currentWeapon, ammo);
+			}
+			else{
+				float xDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition).x - transform.position.x);
+				float yDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition).y - transform.position.y);
+				GameObject tempBull = (Instantiate(getBulletGO(currentWeapon), transform.position, Quaternion.identity) as GameObject);
+				tempBull.AddComponent<Bullet>();
+				tempBull.GetComponent<Bullet>().shootDir = new Vector2(xDiff/Mathf.Sqrt(xDiff*xDiff+yDiff*yDiff), yDiff/Mathf.Sqrt(xDiff*xDiff+yDiff*yDiff));
+				tempBull.GetComponent<Bullet>().fireSpeed = 0.4f;
+				tempBull.GetComponent<Bullet>().dmg = 5;
+			}
+			break;
 		}
 		ammo--;
-		if(ammo <= 0) {
-			currentWeapon = "";
-			holdingWeapon.GetComponent<SpriteRenderer>().sprite = null;
-		}
 	}
 
-	private void throwWeapon(string weapon)
+	private void throwWeapon(string weapon, int amm)
 	{
 		GameObject tempThrown = Instantiate(weaponGameObject(weapon), holdingWeapon.transform.position, Quaternion.identity) as GameObject;
-		tempThrown.GetComponent<PickupMaster>().thrown = true;
+		tempThrown.GetComponent<PickupMaster> ().thrown = true;
+		tempThrown.GetComponent<PickupMaster> ().ammo = amm;
 		float xDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition).x - holdingWeapon.transform.position.x);
 		float yDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition).y - holdingWeapon.transform.position.y);
-		int negX = 1;
-		int negY = 1;
-		if(xDiff < 0) {
-			negX = -1;
+		tempThrown.GetComponent<PickupMaster>().throwDir = new Vector2(xDiff/Mathf.Sqrt(xDiff*xDiff+yDiff*yDiff), yDiff/Mathf.Sqrt(xDiff*xDiff+yDiff*yDiff));
+		currentWeapon = "";
+		holdingWeapon.GetComponent<SpriteRenderer>().sprite = null;
+	}
+
+	private GameObject getBulletGO(string weapon)
+	{
+		switch (weapon) {
+		case "gun":
+			return bullets[1];
 		}
-		if(yDiff < 0) {
-			negY = -1;
-		}
-		tempThrown.GetComponent<PickupMaster>().throwDir = new Vector2(negX*xDiff*xDiff/(xDiff*xDiff+yDiff*yDiff), negY*yDiff*yDiff/(xDiff*xDiff+yDiff*yDiff));
+		return null;
 	}
 }

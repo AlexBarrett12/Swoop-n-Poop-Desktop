@@ -30,4 +30,11 @@ public static class SaveLoad{
 		Save();
 		return Load();
 	}
+
+	public static void clearSave()
+	{
+		if (File.Exists (Application.persistentDataPath + "/save.snp")) {
+			File.Delete(Application.persistentDataPath + "/save.snp");
+		}
+	}
 }

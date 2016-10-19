@@ -13,13 +13,6 @@ public class dropping : MonoBehaviour {
 		rb2D = GetComponent<Rigidbody2D>();
 	}
 
-	void Update()
-	{
-		if(transform.position.y < -5) {
-			Destroy(gameObject);
-		}
-	}
-
 	void FixedUpdate()
 	{
 		rb2D.MovePosition(new Vector2(transform.position.x + dir.x, transform.position.y + dir.y));
